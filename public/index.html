@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seraya Store | Discord Webhook Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+      /* Reset default dan base styling */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        color: #1e293b;
+        line-height: 1.6;
+        padding: 2rem 1rem;
+      }
+
+      body {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-in forwards;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .glass-effect,
+      .draft-item {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: slideUp 0.6s ease-out forwards;
+        animation-delay: calc(0.1s * var(--order));
+      }
+
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Tambahkan variabel order di HTML untuk stagger effect */
+      .glass-effect {
+        --order: 1;
+      }
+      #draft-sections {
+        --order: 2;
+      }
+
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+
+      .text-center h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.5rem;
+      }
+
+      .text-center p {
+        font-size: 1.25rem;
+        color: #64748b;
+        font-weight: 400;
+      }
+
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Custom Webhook Selector */
+      .webhook-selector {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .webhook-selector .selected {
+        width: 100%;
+        padding: 0.75rem 2.5rem 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background-color: #ffffff;
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #1e293b;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+        transition: all 0.2s ease;
+      }
+
+      .webhook-selector .selected:hover {
+        border-color: #94a3b8;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .webhook-selector .dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-height: 12rem;
+        overflow-y: auto;
+        display: none;
+        z-index: 10;
+      }
+
+      .webhook-selector .dropdown.show {
+        display: block;
+      }
+
+      .webhook-selector .dropdown .optgroup {
+        font-weight: 600;
+        color: #475569;
+        background-color: #f9fafb;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .webhook-selector .dropdown .option {
+        padding: 0.5rem 1rem;
+        color: #1e293b;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .webhook-selector .dropdown .option:hover {
+        background-color: #f3f4f6;
+      }
+
+      .webhook-selector .dropdown .option.selected {
+        background-color: #e0f2fe;
+        color: #1e40af;
+      }
+
+      /* Action buttons */
+      button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+      }
+
+      button.bg-gray-100 {
+        background-color: #f3f4f6;
+        color: #4b5563;
+      }
+
+      button.bg-gray-100:hover {
+        background-color: #e5e7eb;
+        transform: translateY(-1px);
+      }
+
+      button.bg-indigo-600 {
+        background-color: #4f46e5;
+        color: white;
+      }
+
+      button.bg-indigo-600:hover {
+        background-color: #4338ca;
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      button:hover,
+      .draft-item:hover {
+        transform: scale(1.03);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      button:active,
+      .draft-item:active {
+        transform: scale(0.98);
+      }
+
+      /* Draft section */
+      .bg-gray-50 {
+        background-color: #f9fafb;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+      }
+
+      h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+      }
+
+      .bg-gray-50 .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+      }
+
+      .draft-item {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+        touch-action: none;
+      }
+
+      .draft-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .draft-item h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+      }
+
+      .draft-item p {
+        font-size: 0.875rem;
+        color: #64748b;
+        line-height: 1.4;
+      }
+
+      .draft-item img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .draft-item button {
+        padding: 0.5rem 1rem;
+        background-color: #fef2f2;
+        color: #dc2626;
+      }
+
+      .draft-item button:hover {
+        background-color: #fee2e2;
+      }
+
+      .draft-item button.edit {
+        background-color: #e0f2fe;
+        color: #1e40af;
+      }
+
+      .draft-item button.edit:hover {
+        background-color: #bfdbfe;
+      }
+
+      .draft-item .actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+
+      /* Styling untuk drag-and-drop */
+      .draft-item.dragging {
+        opacity: 0.7;
+        background-color: #f3f4f6;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
+        z-index: 1000;
+      }
+
+      .draft-item-placeholder {
+        border: 2px dashed #94a3b8;
+        background-color: #f9fafb;
+        opacity: 0.5;
+        border-radius: 0.75rem;
+        height: 100%;
+        width: 100%;
+      }
+
+      .dragging-active * {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
+
+      /* Info box */
+      .bg-blue-50 {
+        background-color: #eff6ff;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        border: 1px solid #dbeafe;
+        color: #1e40af;
+        font-size: 0.875rem;
+      }
+
+      /* Status */
+      #status {
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .text-green-500 {
+        color: #16a34a;
+      }
+
+      .text-red-500 {
+        color: #dc2626;
+      }
+
+      /* Notepad dan Edit modal */
+      #notepad-modal,
+      #edit-modal {
+        background: rgba(0, 0, 0, 0.5);
+        transition: opacity 0.3s ease;
+      }
+
+      #notepad-modal .bg-white,
+      #edit-modal .bg-white {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 500px;
+      }
+
+      #notepad-modal h2,
+      #edit-modal h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+      }
+
+      #notepad-textarea,
+      #edit-textarea {
+        width: 100%;
+        height: 200px;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        font-size: 0.875rem;
+        color: #334155;
+        resize: none;
+        transition: all 0.2s ease;
+      }
+
+      #edit-image-input {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        font-size: 0.875rem;
+        color: #334155;
+        margin-top: 1rem;
+      }
+
+      #edit-image-preview {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+        display: none;
+      }
+
+      #notepad-textarea:focus,
+      #edit-textarea:focus,
+      #edit-image-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      }
+
+      #notepad-modal button.bg-indigo-600,
+      #edit-modal button.bg-indigo-600 {
+        padding: 0.5rem 1.5rem;
+      }
+
+      /* Responsif */
+      @media (max-width: 640px) {
+        body {
+          padding: 1rem 0.5rem;
+        }
+
+        .text-center h1 {
+          font-size: 2.5rem;
+        }
+
+        .text-center p {
+          font-size: 1rem;
+        }
+
+        .glass-effect {
+          padding: 1rem;
+          border-radius: 1rem;
+        }
+
+        button {
+          width: 100%;
+          padding: 0.75rem;
+        }
+
+        .webhook-selector {
+          width: 100%;
+        }
+
+        .webhook-selector .selected {
+          padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+        }
+
+        .webhook-selector .dropdown {
+          max-height: 10rem;
+          transform: translateY(-10px);
+          opacity: 0;
+          transition: transform 0.3s ease, opacity 0.2s ease;
+        }
+
+        .webhook-selector .dropdown.show {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        .bg-gray-50 .grid {
+          grid-template-columns: repeat(1, 1fr);
+          gap: 0.75rem;
+        }
+
+        .draft-item {
+          padding: 0.75rem;
+        }
+
+        .draft-item img {
+          height: 100px;
+        }
+
+        #notepad-textarea,
+        #edit-textarea {
+          height: 150px;
+        }
+      }
+
+      @media (min-width: 641px) and (max-width: 768px) {
+        .webhook-selector .dropdown {
+          max-height: 11rem;
+        }
+
+        .bg-gray-50 .grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.875rem;
+        }
+
+        .text-center h1 {
+          font-size: 3rem;
+        }
+      }
+
+      /* Animasi */
+      .glass-effect,
+      .draft-item {
+        transition: all 0.3s ease;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      @media (max-width: 768px) {
+        button {
+          min-height: 48px;
+        }
+      }
+
+      /* Styling untuk badge "news" */
+      .news-badge {
+        position: absolute;
+        top: -0.5rem; /* Posisi di atas tombol */
+        right: -0.5rem; /* Posisi di kanan tombol */
+        background-color: #ef4444; /* Warna merah untuk menarik perhatian */
+        color: white;
+        font-size: 0.65rem; /* Ukuran teks kecil */
+        font-weight: 600;
+        padding: 0.1rem 0.4rem;
+        border-radius: 9999px; /* Bentuk bulat */
+        text-transform: uppercase;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body class="py-12 px-4 sm:px-6">
+    <div class="container mx-auto max-w-6xl">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-6xl font-bold header-gradient tracking-tight mb-4">
+          Seraya Store
+        </h1>
+        <p class="text-slate-600 text-xl">Discord Webhook Manager</p>
+      </div>
+
+      <!-- Main Content -->
+      <div class="glass-effect rounded-3xl p-8 mb-8">
+        <!-- Webhook Selector -->
+        <div class="mb-8">
+          <label
+            for="webhook-selector"
+            class="block text-sm font-medium text-slate-700 mb-2"
+          >
+            Select Webhooks (Hold Ctrl/Cmd to select multiple)
+          </label>
+          <div class="webhook-selector">
+            <div class="selected">Select members...</div>
+            <div class="dropdown">
+              <div class="optgroup">ANNOUNCEMENT</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1346700930338258945/WiBw1PV0SX_Y8j30I7BMfGVaqwW1MjtojFjhjPdO2rriK2a9Pyy61PWGAH6oR7U-pOou"
+              >
+                Testing Website 
+              </div>
+              <div class="optgroup">Generation 3</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239113110757838909/4LV2rSKeAKuTAvaNQU-qYzOd7WdjRtf1qwmLykefZ6WxiWOrnzdhwjyDBY-6QngasKg_"
+              >
+                Feni
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239114098294394940/rOcMeGd_C5_eVltHUVqMIIZM178kL4Yd0cEAYt-hcqrZsFpcyHhuDiv8VF8I34vtXwCd"
+              >
+                Gracia
+              </div>
+
+              <div class="optgroup">Generation 6</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239113789274718280/iymXG2FVhYTS84H7Q2f_W6JNI8uleHWEs43PNwA1AjSh4xyuVIAOEqr8AZg0FpUm_WUl"
+              >
+                Gita
+              </div>
+
+              <div class="optgroup">Generation 7</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239111998860431410/8nqojNywJUCYaXxPU5e7lMD5ui8WgOc6S524_J_7_SGny3JcfQ9uQWrfCOtdv9sZd5lI"
+              >
+                Christy
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239112668070281277/jXB8KmEu-zLnammMvuJbkchCotujBjNNJUbk5cUPv6-8EFZVROQ1KvM-G6MWxaTCdog1"
+              >
+                Eli
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239113553743577169/b_0rUeceQBbvh-4sRE5x0dCxPFBx0V59aMawRrfIZfyBWpw7iL0DTm7j80Q-b5GgBvJ7"
+              >
+                Freya
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239117376612466719/B0R9s4Of_gg2GUkHlRF0-ZzHWTZIe_cufRrNSToR8eBl2PItniWXIO40CA-nCwxfrIh6"
+              >
+                Jessi
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239118022652727326/T6C3Lydu2uL0akT-dfUH7-LYzadeDLpbt5fOyLd56zoEp67Q70heh4ETquJOVOGN88mt"
+              >
+                Muthe
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239118024406208544/tJcjlteKdda-p_q8K8WpJ7w_Ya6bW3Ad9AwwKF0furOIVKtgPGLyNErr2gp-PqeVKDIb"
+              >
+                Olla
+              </div>
+
+              <div class="optgroup">Generation 8</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239113317037899806/ip-QnUqZcx6XbjxSZYAhJAqX69avW97LsxsF7tLc3ZlED-rQ1-eqqPxTWRKwIbaX2s0k"
+              >
+                Fiony
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239117382497210488/VHt4eRdgKM5k6FyLWx2MHbgFMOLbOE7xRCO7AbJIdxNp-b1qkqqYiX3WwWXbhCXFHCC7"
+              >
+                Lulu
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239118026041987102/ZQQF_YzhzWflONHr509OdU02C-awEDmiA3dRQRMaB_ct5xycNKFA17_gcyiMzyzKo7-m"
+              >
+                Oniel
+              </div>
+
+              <div class="optgroup">Generation 9</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239116569640960063/XYpPaKRt_jjUkCwm9WzPJupDMvKPvCZEk2mrASs3KGQqCVLqTq4JGWwYkSekKbBZj4V4"
+              >
+                Indah
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239117378751696926/PgvuA0AS84o02y7T2seUl2aUZwdofCqFPROmEmmW1wIF6Y4pq3sTCE6DYqCe1Xnc1jvl"
+              >
+                Kathrina
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239118019947528192/QvEcxIuuF80Zr0iWY7Uqf6gLw4RMd5Cu_I6TngaBnuG_MkVZxxJI35ejwx9N7QwvY2BC"
+              >
+                Marsha
+              </div>
+
+              <div class="optgroup">Generation 10</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239111339759239219/J3Wquc_-B3E1xPQWg-2BnD1rJoNxhKI_PLNYzwz_0pfLPPajuVroHQaM3Jw_cwEivbLE"
+              >
+                Amanda
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239112928821514260/gXUKFG0XgNoPHhL3lVAnrf3rJ92oMmOrYp8StmfrUQ2a0JbEF6kAU-LjzUW34iGHjABh"
+              >
+                Ella
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239116603463831552/0ggtQ_BVpp1_KK0N2aIxZQwCNByduhNhmNAGI3aed_nmyXhK-yK9922-rYOSMMbroI7s"
+              >
+                Indira
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239117380538466364/eNyYL8aZpDtFF5NjnsFSIVNYrjxnEQ5-amWmQlWt_dnSXVtyZXkgKm_tBm_XQgz4EKJP"
+              >
+                Lia
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239118014390079508/oPx0HZhvYAs0llfJhopAXwIf9BgwOkozbmaMAPtDafNm6tMhynH1UG6MFf3JLEOF1Apf"
+              >
+                Lyn
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239122633736327269/VbNwr0UvMIjlgwK0VlnMZFUdTtJkNzNJs7bcCQWrD-QAG78I1g1dc60JyqEzM7TW5-2U"
+              >
+                Raisha
+              </div>
+
+              <div class="optgroup">Generation 11</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1327301945383321671/3xuGMLUip1pVctkUKKS3yuhvajb6tw296CAEvkCPoJU_s5LGoXVcZlyJgdX3KZ3pKx05"
+              >
+                Alya
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239111454620254219/WLLXqGbV9NtnBGuK00T9Yx0zRIvg3WG-uI2hhl2S-gGE6se9fdQKnGBPoIY-kqe9LOfx"
+              >
+                Anindya
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239111741565042688/vrZA0IjzLv0DOVDGRGwUikQmUGp4WegIEVCXoDxiRGmR4DAhNcAdv8EE5q4BkqLNRgk1"
+              >
+                Cathy
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239111875426385980/m1_MP2uT-fOUfumf2q-ALlYK4ewsA2-Tyu4czehzdioFTQKD2UHVCkKIvZc5OB7jkGoZ"
+              >
+                Chelsea
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239112180150833172/k2kVkgJ0oD1cOErKzG5ruxv6La3G3wtcn0osRE_XuVzuVlg0xqvsMo6DQw0xoRC-2MAB"
+              >
+                Cynthia
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239112311738990663/q1PWqm9oY-KRV6ee948nhJHx-xGW6R32z_2b95WGCJDJfNFPzXZuV6GIaKzsuLlwEi5B"
+              >
+                Daisy
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239112452428533820/DS6o6aCnc1g0B_XU_4SU8WJ957JNI-4yKe1BBqhd44ys159i8gVi45rXznblirJPl-xQ"
+              >
+                Danella
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239112799297474561/MqZ9iTFSYtuEOdxbLS4G_JLDiejsbR7eLLp0_5QmbfGSFA5YG4uiJOmC7TqD2VBF34kS"
+              >
+                Elin
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239113647335411836/qH0a6jEgDB_SVz9s5pWlxYH92fE8PTMrawKLETzA9E2TALsrgmEesiVw09KillZbx8mp"
+              >
+                Gendis
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239116561139241000/gEI_o6LpG3WzdQs_Hm_XU37jFtDrO8YW0OTaFyUO5vRoSB62_e2Uub9wUWl-67yYrwrq"
+              >
+                Gracie
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239116567707521054/ZKpHeg1HqD4vMClB6PI0T_9IKi68Ed503iynAv2NUfhaQMLTuqDOxFRCt4lQT2JPOn9-"
+              >
+                Greesel
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1239118020920737845/X9jroJFbbt5P3X1k-Cb2Km5XitaoGIW_Uayfcv0To5ZV3wiLj10rI-h3MLdyycfVNHJz"
+              >
+                Michie
+              </div>
+
+              <div class="optgroup">Generation 12</div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298526014804197386/Gmxnyxe0Vob5T5cp8r4XSQAQba3fv5LB5szRmi-mPUbpakcTj0l0o2L4Bvo4809KxyN1"
+              >
+                Aralie
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298526550601371649/7XrgZqfMu6epSnpemN2Q42jw7wEyxQS3_jDWkTy6_yTDUgSuWOLdjnIpCGuD4iV4pJLV"
+              >
+                Delyn
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298354149842489405/l2c4sbCao_RvG-avzVZ7zkOxyF3c21YNkyXX1gFsni_YGfyWF36oIYI1KrY9AxXmBBZX"
+              >
+                Erine
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298527062914498590/HOOtCxJwR7Fsp3XTueu0WwLWxkZvRu2aq4qj3sFu3FpPJwiEESnOTVdYLlvcTEdg-a5I"
+              >
+                Fritzy
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298526729907867731/j63FbAwY4liZ3LJHynxVk9CQzrBrc5rDk4EblMnY6F1boPclT1HdgTxkmZnFVI6PlY4k"
+              >
+                Lana
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298527849803681862/zxH1gl8HmrlTQU3-TZQ7n4KYLF-GFgu3UfiwYK3VnNm1R1y3yVrDgAHD92a0hOWBLGYP"
+              >
+                Levi
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298527209119682600/I4CRNgj3eH_vzWzKO3Lq-uGFGtkj1Cq_4zR9qOJs9p3Ts6ziLngHLD-wt-rapYLB7NHr"
+              >
+                Lily
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298527653644599359/kRa7GoF7X92hOc4v7H6iuLyCytrPVpaDVKszaulvwMXnk_tGhEeAVA-d30mUSk-jH2c0"
+              >
+                Moreen
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298529076948111360/KuXiWbgNvTuIfQGu9GFhZT4Nqkk3b_OorMyvoX1BPxPTeWre0yckAfyQeQwwQdifL1Sv"
+              >
+                Nala
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298528136580829196/7_wFj5NLLwC5DFgDTUSE6fn0YZJPjRBV8qSOQhHhgKuoClAmAXsPS-ePF_CYqqPkkJHi"
+              >
+                Nachia
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298527996344275006/KAN8_Igq_aUlk2MUevqPsMlquCZOpjUAPi1KFl5gTL15KLTuXov1YYGkAQYIGXBAsZih"
+              >
+                Nayla
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1299728545832243294/2dSVtSAekuWnIu2xkkR8sibtQV9new7x-cPgTa79YAq20BebO3zDBAMugF3eQ2gga9sb"
+              >
+                Oline
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298894153710702623/XZREV-5yW7AXSctcVSJEjLxWSNNvfO9gJepPOvJmC92rUqbDPKd_gXrCnCQcYv8JA8cF "
+              >
+                Regie
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298528906474946631/Nj5nLuBGxYJVgSZYt7B78hld0NMVZwpv4T__2LsA1ZygMoyxYsmsLMqXRabvL3WUDi37"
+              >
+                Ribka
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298527442448945234/9uOXWjrJfLs-CZ7VWWnublbKaS_zjCFQXHLbLlRyOnLZkvzO5-3WHeMzUNi2nP7vQ0zZ"
+              >
+                Trisha
+              </div>
+              <div
+                class="option"
+                data-value="https://discord.com/api/webhooks/1298529298621268039/wbDhmEdlrp49ysKA7hk8kJO11FDcBbClSjnSuP7_ublo0Y2f6cD-4K2v0bP0lJ8owfQk"
+              >
+                Kimmy
+              </div>
+
+              <div class="optgroup">Generation 13</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tambahkan setelah Webhook Selector -->
+        <div
+          id="drop-zone"
+          class="border-dashed border-2 border-gray-300 p-6 text-center mb-6 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+        >
+          <p class="text-gray-600">Klik atau Seret & Lepaskan File di Sini</p>
+          <p class="text-sm text-gray-500">
+            Gunakan Shift + Klik untuk memilih file secara berurutan
+          </p>
+          <p class="text-sm text-blue-600 mt-2">
+            <i data-lucide="zoom-in" class="w-4 h-4 inline-block mr-1"></i>
+            Klik gambar pada draft untuk melihat preview yang lebih besar
+          </p>
+          <ul
+            id="file-list"
+            class="mt-4 list-none text-left text-sm text-gray-700"
+          ></ul>
+        </div>
+
+        <!-- Progress Bar Container -->
+        <div id="progress-container" class="mb-6 w-full bg-gray-200 rounded-full h-2.5 hidden">
+          <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+
+        <input
+          type="file"
+          id="multi-upload"
+          accept="image/*,text/plain"
+          class="hidden"
+          multiple
+          onchange="loadFileContent(this)"
+        />
+        <input
+          type="file"
+          id="audio-upload"
+          accept="audio/*"
+          class="hidden"
+          multiple
+          onchange="loadAudioContent(this)"
+        />
+
+        <!-- Action Buttons -->
+        <div
+          class="flex flex-col sm:flex-row flex-wrap justify-between items-stretch gap-4 mb-8"
+        >
+          <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button
+              onclick="triggerMultiUpload()"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-gray-100 text-gray-800 text-sm font-medium rounded-xl shadow-sm transition-all duration-200 hover:bg-gray-200 active:scale-98"
+            >
+              <i data-lucide="image-plus" class="w-5 h-5"></i>
+              <span class="whitespace-nowrap">Upload Files</span>
+            </button>
+            <button
+              onclick="triggerAudioUpload()"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-gray-100 text-gray-800 text-sm font-medium rounded-xl shadow-sm transition-all duration-200 hover:bg-gray-200 active:scale-98 relative"
+            >
+              <i data-lucide="mic" class="w-5 h-5"></i>
+              <span class="whitespace-nowrap">Upload Audio</span>
+              <span class="news-badge">news</span>
+            </button>
+            <button
+              onclick="openNotepad()"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-gray-100 text-gray-800 text-sm font-medium rounded-xl shadow-sm transition-all duration-200 hover:bg-gray-200 active:scale-98"
+            >
+              <i data-lucide="file-text" class="w-5 h-5"></i>
+              <span class="whitespace-nowrap">Notepad</span>
+            </button>
+            <button
+              onclick="showStatsModal()"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-gray-100 text-gray-800 text-sm font-medium rounded-xl shadow-sm transition-all duration-200 hover:bg-gray-200 active:scale-98"
+            >
+              <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+              <span class="whitespace-nowrap">Quick Stats</span>
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button
+              onclick="sendData()"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl shadow-md transition-all duration-200 hover:bg-indigo-500 active:scale-98"
+            >
+              <i data-lucide="send" class="w-5 h-5"></i>
+              <span class="whitespace-nowrap">Send</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Draft Section akan dibuat secara dinamis oleh JavaScript -->
+        <div id="draft-sections" class="mb-8">
+          <!-- Example of a draft item -->
+          <div class="draft-item">
+            <button class="expand-collapse-btn" onclick="toggleDraft(this)">Expand</button>
+            <div class="draft-content hidden">
+              <!-- Draft content goes here -->
+              <p>Your draft message...</p>
+            </div>
+          </div>
+          <!-- Repeat for other draft items -->
+        </div>
+
+        <!-- Drag & Drop Info -->
+        <div
+          class="p-4 mt-6 text-sm bg-blue-50 text-blue-700 rounded-xl border border-blue-100"
+        >
+          <div class="flex items-center gap-2">
+            <i data-lucide="info" class="w-30 h-30"></i>
+            <p>
+              When you use this website on a mobile device, you can move text or
+              images by simply holding, moving, and releasing them. And if the
+              field cannot be moved, you can select outside the field area
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Message -->
+      <div id="status" class="mt-8 text-center text-sm font-medium"></div>
+
+      <!-- Notepad Modal -->
+      <div
+        id="notepad-modal"
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden transition-opacity duration-300"
+      >
+        <div
+          class="bg-white p-6 rounded-2xl shadow-2xl w-11/12 max-w-lg relative transform transition-all duration-300 scale-95 opacity-0"
+        >
+          <button
+            onclick="closeNotepad()"
+            class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl"
+          >
+            ×
+          </button>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Notepad</h2>
+          <textarea
+            id="notepad-textarea"
+            class="w-full h-40 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400"
+            placeholder="Type your notes here..."
+          ></textarea>
+          <div class="flex justify-end gap-3 mt-6">
+            <button
+              onclick="saveNotepadText()"
+              class="px-5 py-2 bg-indigo-600 text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105 hover:bg-indigo-500"
+            >
+              Save to Draft
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Modal -->
+      <div
+        id="edit-modal"
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden transition-opacity duration-300"
+      >
+        <div
+          class="bg-white p-6 rounded-2xl shadow-2xl w-11/12 max-w-lg relative transform transition-all duration-300 scale-95 opacity-0"
+        >
+          <button
+            onclick="closeEditModal()"
+            class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl"
+          >
+            ×
+          </button>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Edit Draft</h2>
+          <textarea
+            id="edit-textarea"
+            class="w-full h-40 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400"
+            placeholder="Edit your message here..."
+          ></textarea>
+          <input
+            type="file"
+            id="edit-image-input"
+            accept="image/*"
+            class="hidden"
+            onchange="previewEditImage(this)"
+          />
+          <img id="edit-image-preview" src="" alt="Image Preview" />
+          <div class="flex justify-end gap-3 mt-6">
+            <button
+              onclick="saveEditDraft()"
+              class="px-5 py-2 bg-indigo-600 text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105 hover:bg-indigo-500"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Preview Modal -->
+      <div id="image-preview-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden transition-opacity duration-300 z-50">
+        <div class="relative w-11/12 max-w-4xl max-h-[90vh] flex items-center justify-center">
+          <button onclick="closeImagePreviewModal()" class="absolute -top-10 right-0 text-white hover:text-gray-300 text-3xl">&times;</button>
+          <img id="modal-image-preview" src="" alt="Preview" class="max-w-full max-h-[85vh] object-contain rounded-lg">
+        </div>
+      </div>
+
+      <!-- Stats Modal -->
+      <div id="stats-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden transition-opacity duration-300 z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-11/12 max-w-2xl relative transform transition-all duration-300 scale-95 opacity-0">
+          <button onclick="closeStatsModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+          <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-6 h-6 text-indigo-500"></i>
+            Quick Stats
+          </h2>
+          <div id="stats-content" class="space-y-4">
+            <!-- Content will be dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Tombol History -->
+      <button onclick="showHistoryModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          Lihat History
+      </button>
+
+      <!-- Modal History -->
+      <div id="history-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 transition-opacity duration-300">
+          <div class="min-h-screen px-4 text-center">
+              <div class="inline-block w-full max-w-4xl p-6 my-8 text-left align-middle transition-all transform bg-gray-50 shadow-xl rounded-2xl">
+                  <div class="flex items-center justify-between mb-6">
+                      <h3 class="text-lg font-medium text-gray-900">Riwayat Pengiriman</h3>
+                      <div class="flex items-center gap-2">
+                          <button onclick="clearHistory()" class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                              Hapus History
+                          </button>
+                          <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-gray-500">
+                              <i data-lucide="x" class="w-5 h-5"></i>
+                          </button>
+                      </div>
+                  </div>
+                  <div id="history-content" class="overflow-y-auto max-h-[70vh]">
+                      <!-- Content will be dynamically inserted here -->
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+
+    <script src="./form.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+    <script>
+      function toggleDraft(button) {
+        const content = button.nextElementSibling;
+        if (content.classList.contains('hidden')) {
+          content.classList.remove('hidden');
+          button.textContent = 'Collapse';
+        } else {
+          content.classList.add('hidden');
+          button.textContent = 'Expand';
+        }
+      }
+    </script>
+  </body>
+</html>

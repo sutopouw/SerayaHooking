@@ -1,0 +1,13 @@
+{
+  "name": "discord-webhook-manager",
+  "version": "1.0.0",
+  "description": "Discord Webhook Manager with History",
+  "main": "api/history.js",
+  "scripts": {
+    "start": "node api/history.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.5",
+    "dotenv": "^16.3.1"
+  }
+} 
